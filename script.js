@@ -1,41 +1,55 @@
 import { PALAVRAS_RUINS } from "./palavrasRuins.js";
 
 const botaoMostraPalavras = document.querySelector('#botao-palavrachave');
-const campoDeTexto = document.querySelector('#entrada-de-texto');
-const campoResultado = document.querySelector('#resultado-palavrachave');
 
-botaoMostraPalavras.addEventListener('click', () => {
-    const texto = campoDeTexto.value;
+botaoMostraPalavras.addEventListener('click', mostraPalavrasChave);
+
+function mostraPalavrasChave() {
+    const texto = document.querySelector('#entrada-de-texto').value;
+    const campoResultado = document.querySelector('#resultado-palavrachave');
     const palavrasChave = processaTexto(texto);
-    
+
     campoResultado.textContent = palavrasChave.join(", ");
-});
-
-function processaTexto(texto) {
-    // 1. Divide o texto em palavras e converte para minúsculas
-    const palavras = texto.toLowerCase().split(/\P{L}+/u);
-
-    // 2. Filtra as palavras, removendo "palavras ruins" e palavras curtas
-    const palavrasBoas = palavras.filter(palavra => 
-        !PALAVRAS_RUINS.has(palavra) && palavra.length > 2
-    );
-
-    // 3. Conta a frequência de cada palavra boa
-    const frequencias = contaFrequencias(palavrasBoas);
-
-    // 4. Ordena as palavras pela frequência e pega as 10 mais relevantes
-    const palavrasOrdenadas = Object.keys(frequencias).sort((p1, p2) => 
-        frequencias[p2] - frequencias[p1]
-    );
-
-    return palavrasOrdenadas.slice(0, 10);
 }
 
-// Otimização: percorre o array apenas uma vez
+function processaTexto(texto) {
+    let palavras = texto.split(/\P{L}+/u);
+
+    for (let i in palavras) {
+        palavras[i] = palavras[i].toLowerCase();
+    }
+
+    palavras = tiraPalavrasRuins(palavras);
+
+    const frequencias = contaFrequencias(palavras);
+    let ordenadas = Object.keys(frequencias).sort(ordenaPalavra);
+
+    function ordenaPalavra(p1, p2) {
+        return frequencias[p2] - frequencias[p1];
+    }
+
+    return ordenadas.slice(0, 10);
+}
+
 function contaFrequencias(palavras) {
-    const frequencias = {};
-    for (const palavra of palavras) {
-        frequencias[palavra] = (frequencias[palavra] || 0) + 1;
+    let frequencias = {};
+    for (let i of palavras) {
+        frequencias[i] = 0;
+        for (let j of palavras) {
+            if (i == j) {
+                frequencias[i]++;
+            }
+        }
     }
     return frequencias;
+}
+
+function tiraPalavrasRuins(palavras) {
+    const palavrasBoas = [];
+    for (let palavra of palavras) {
+        if (!PALAVRAS_RUINS.has(palavra) && palavra.length > 2) {
+            palavrasBoas.push(palavra);
+        }
+    }
+    return palavrasBoas;
 }
